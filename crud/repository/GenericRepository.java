@@ -1,4 +1,4 @@
-package crud.repository;
+package main.java.com.timon1983.javacore.crud.repository;
 
 import java.util.List;
 

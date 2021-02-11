@@ -1,16 +1,21 @@
 package main.java.com.timon1983.javacore.crud.repository.io;
 
-import main.java.com.timon1983.javacore.crud.repository.LabelRepository;
 import main.java.com.timon1983.javacore.crud.model.Label;
+import main.java.com.timon1983.javacore.crud.model.Post;
+import main.java.com.timon1983.javacore.crud.model.Writer;
+import main.java.com.timon1983.javacore.crud.repository.PostRepository;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
-public class JavaIOLableRepositoryImpl implements LabelRepository {
-    private File file = new File("lables.txt");
+public class JavaIOPostRepository implements PostRepository {
+    private File file = new File("Post.txt");
+    private JavaIOLableRepositoryImpl javaIOLableRepository = new JavaIOLableRepositoryImpl();
 
     @Override
-    public Label getByld(Long id) {
+    public Post getByld(Long id) {
         List<String> lines = new ArrayList<>();
         String name = null;
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
@@ -24,31 +29,44 @@ public class JavaIOLableRepositoryImpl implements LabelRepository {
         }
         String myStream = lines.stream().filter((n)->(n.startsWith(Long.toString(id)))).
                 map((n) ->(n.substring(3))).findFirst().orElse("Нет записи с таким id");
+        String[] lineSplit = myStream.split(", ");
+        String getContent = lineSplit[1];
+        long getCreated = Long.parseLong(lineSplit[2]);
+        long getUpdated = Long.parseLong(lineSplit[3]);
+        List<Label> getLables = javaIOLableRepository.getAll();
 
-        return  new Label(id , myStream);
+        return  new Post(id , getContent,getCreated,getUpdated,getLables);
     }
 
     @Override
-    public List<Label> getAll() {
-        List<Label> lables = new ArrayList<>();
+    public List<Post> getAll() {
+
+        List<Post> posts = new ArrayList<>();
         Long idGet;
-        String nameGet;
+        String getContent;
+        long getCreated;
+        long getUpdated;
+        List<Label> getLables;
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             while (true) {
                 String line = br.readLine();
                 if (line == null) {break;}
-                idGet = (long)Character.getNumericValue(line.charAt(0));
-                nameGet = line.substring(3);
-                lables.add(new Label(idGet , nameGet));
+                String[] lineSplit = line.split(", ");
+                idGet = Long.parseLong(lineSplit[0]);
+                getContent = lineSplit[1];
+                getCreated = Long.parseLong(lineSplit[2]);
+                getUpdated = Long.parseLong(lineSplit[3]);
+                getLables = javaIOLableRepository.getAll();
+                posts.add(new Post(idGet , getContent, getCreated, getUpdated, getLables));
             }
         } catch (IOException e) {
             System.out.println("Произошла ошибка ввода-вывода");
         }
-        return lables;
+        return posts;
     }
 
     @Override
-    public Label save(Label l) {
+    public Post save(Post post) {
         long newID;
         List<String> lines = new LinkedList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
@@ -64,22 +82,22 @@ public class JavaIOLableRepositoryImpl implements LabelRepository {
             newID = 1;
         } else{
             newID = Long.parseLong(lines.get(lines.size() - 1).substring(0, lines.get(lines.size() - 1).
-                indexOf(',',0))) + 1;
+                    indexOf(',',0))) + 1;
         }
 
-        l.setId(newID);
+        post.setId(newID);
 
         try(FileWriter fw = new FileWriter(file,true))
         {
-           fw.write(convertLabeltoString(l) + "\n");
+            fw.write(convertWritertoString(post) + "\n");
         }catch(IOException e){
             System.out.println("Произошла ошибка ввода-вывода");
         }
-        return l;
+        return post;
     }
 
     @Override
-    public Label update(Label l) {
+    public Post update(Post post) {
         List<String> lines = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             while (true) {
@@ -91,10 +109,12 @@ public class JavaIOLableRepositoryImpl implements LabelRepository {
             System.out.println("Произошла ошибка ввода-вывода");
         }
 
-        String linesStream = lines.stream().filter((n) -> (n.startsWith(Long.toString(l.getId())))).findFirst().orElse("Нет такого  id");
+        String linesStream = lines.stream().filter((n) -> (n.startsWith(Long.toString(post.getId())))).findFirst().orElse("Нет такого  id");
         String[] splitLineStream = linesStream.split(",");
         if(!linesStream.equals("Нет такого  id")){
-            lines.set(lines.indexOf(linesStream), splitLineStream[0] + ", " + l.getName());
+            lines.set(lines.indexOf(linesStream), splitLineStream[0] + ", " +
+                    post.getContent() + ", " +post.getCreated() + ", " + post.getUpdated() + ", " +
+                    post.getLables());
         }else {
             System.out.println("Нет такого  id");
         }
@@ -105,7 +125,7 @@ public class JavaIOLableRepositoryImpl implements LabelRepository {
         } catch (IOException e) {
             System.out.println("Произошла ошибка ввода-вывода");
         }
-        return l;
+        return post;
     }
 
     @Override
@@ -122,22 +142,22 @@ public class JavaIOLableRepositoryImpl implements LabelRepository {
         }
         boolean remove = lines.removeIf((n)->(n.startsWith(Long.toString(id))));
         if (!remove) {
-                System.out.println("Нет записи с таким ID");
-            } else {
-                System.out.println("Запись с ID " + id + " удалено");
-            }
+            System.out.println("Нет записи с таким ID");
+        } else {
+            System.out.println("Запись с ID " + id + " удалено");
+        }
 
         try (FileWriter fw = new FileWriter(file,false)) {
-                for (String s : lines){
-                    fw.write(s + "\n");}
-            } catch (IOException e) {
-                System.out.println("Произошла ошибка ввода-вывода");
-            }
+            for (String s : lines){
+                fw.write(s + "\n");}
+        } catch (IOException e) {
+            System.out.println("Произошла ошибка ввода-вывода");
         }
 
-        private String convertLabeltoString(Label l){
-            String line = l.getId() + ", " + l.getName();
-            return line;
-        }
     }
-
+    private String convertWritertoString(Post post){
+        String line = post.getId() + ", " + post.getContent() + ", " +post.getCreated() + ", " + post.getUpdated() + ", " +
+                post.getLables();
+        return line;
+    }
+}

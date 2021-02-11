@@ -1,8 +1,8 @@
-package crud.model;
+package main.java.com.timon1983.javacore.crud.model;
 
 public class Label {
-    Long id;
-    String name;
+    private Long id;
+    private String name;
 
     public Label(Long id , String name){
         this.id = id;
